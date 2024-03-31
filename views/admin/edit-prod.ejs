@@ -40,7 +40,7 @@
                 <label for="lat">Latitude</label>
                 <input 
                     class="<%= errorArray.find(arr => arr.param === 'lat') ? 'invalid' : '' %>"
-                    type="number" name="lat" id="lat" step=".01" 
+                    type="number" name="lat" id="lat" step=".000001" 
                     value="<% if(editing || errorPresent) { %><%=prod.lat%><% } %>"
                 >
             </div>
@@ -49,7 +49,7 @@
                 <label for="long">Longitude</label>
                 <input 
                     class="<%= errorArray.find(arr => arr.param === 'long') ? 'invalid' : '' %>"
-                    type="number" name="long" id="long" step=".01" 
+                    type="number" name="long" id="long" step=".000001" 
                     value="<% if(editing || errorPresent) { %><%=prod.long%><% } %>"
                 >
             </div>

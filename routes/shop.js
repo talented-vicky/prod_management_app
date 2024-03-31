@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 
 const shopCntr = require('../controllers/product');
-const authCntr = require('../middleware/auth')
 
 router.get('/', shopCntr.showIndex);
 

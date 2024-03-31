@@ -11,8 +11,7 @@ const mongodbStore = require('connect-mongodb-session')(session);
 const User = require('./models/user');
 const errorCtrl = require('./controllers/error');
 
-require('dotenv').config();
-const database_connection_url = process.env.database_connection_url;
+const { database_connection_url } = require('./config/keys')
 
 // routes
 const authRoute = require('./routes/auth');
@@ -77,7 +76,7 @@ app.use(session({
 }));
 
 app.use(csrfProtect);
-app.use(flash );
+app.use(flash());
 
 app.use((req, res, next) => {
     if(!req.session.user){
@@ -111,8 +110,8 @@ app.use((req, res, next) => {
 
 /* routes middleware */
 app.use(shopRoute)
-app.use(authRoute);
 app.use('/admin', adminRoute)
+app.use(authRoute);
 
 
 /* error middlewares */
@@ -123,7 +122,7 @@ app.use(errorCtrl.errorPage);
 app.use((error, req, res, next) => {
     // only reached when next is called with error passed as its arg
     res.render('server-error', {
-        pageTitle: 'Server Error',
+        title: 'Server Error',
         path: '/500',
         isAuth: req.isLoggedIn
     })
@@ -138,3 +137,8 @@ mongoose.connect(database_connection_url)
     .catch(err => {
         console.log(err)
     })
+
+/*
+add comment functionality
+implement product location search
+    */

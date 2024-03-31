@@ -7,18 +7,14 @@ const authController = require('../middleware/auth')
 const { body } = require('express-validator')
 
 // path is /admin/add-product => & has to match the href in the nav.ejs file
-router.get('/edit-product', authController, prodController.getAddProduct);
+router.get('/edit-prod', authController, prodController.getAddProduct);
 
 // here, its /admin/product
 router.post('/product', 
     [
     body('name', 'product name should be at least 5 characters')
-        .isAlphanumeric()
         .isLength({min: 5})
         .trim(),
-    body('image', "image field cannnot be blank")
-        .trim().not().isEmpty()
-        .withMessage("image field cannnot be blank"),
     body('lat', 'Latitude should contain decimal places')
         .isFloat(),
     body('long', 'Longitude should contain decimal places')
@@ -29,12 +25,12 @@ router.post('/product',
 );
 
 // this one is /admin/show-product
-router.get('/show-product', authController, prodController.getMyProduct);
+router.get('/show-prod', authController, prodController.getMyProduct);
 
 // this one is /admin/edit-product/:prodId
-router.get('/edit-product/:prodId', authController, prodController.getEditProduct)
+router.get('/edit-prod/:prodId', authController, prodController.getEditProduct)
 
-router.post('/edit-product', 
+router.post('/edit-prod', 
     [
     body('title', 'title length should be at least 5 characters')
         .isString()

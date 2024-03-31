@@ -129,7 +129,7 @@ exports.postSignup = (req, res, next) => {
                 password: hashedPassword,
                 address: {
                     "type": "Point",
-                    "coordinates": [ lat, long]
+                    "coordinates": [ Number(lat), Number(long)]
                 }
             })
             return user.save()

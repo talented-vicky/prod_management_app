@@ -5,6 +5,8 @@ const cloudinary = require('cloudinary').v2
 const { validationResult } = require('express-validator');
 const { cloudinary_api_key, cloudinary_api_secret, cloudinary_name } = require('../config/keys');
 
+const User = require('../models/user')
+
 cloudinary.config({
     cloud_name: cloudinary_name,
     api_key: cloudinary_api_key,
@@ -36,16 +38,13 @@ exports.getAddProduct = (req, res, next) => {
     })
 }
 
-exports.postAddProduct = (req, res, next) => {
+exports.postAddProduct = async (req, res, next) => {
     const { name, lat, long } = req.body
-    // const image = req.file
     let image
     const initImage = req.file.path
 
     const errors = validationResult(req)
-    console.log(image)
-
-    if(!image){
+    if(!initImage){
         return res.status(422).render('admin/edit-prod', {
             title: 'Add Product',
             path: '/addEdit-product',
@@ -64,15 +63,16 @@ exports.postAddProduct = (req, res, next) => {
             editing: false,
             errorPresent: true,
             addprodError: errors.array()[0].msg,
-            prod: { title: title, price: price, description: des },
+            prod: { name, lat, long },
             errorArray: errors.array()
         })
-    }   
+    } 
 
-    cloudinary.uploader.upload(
+    await cloudinary.uploader.upload(
         initImage,
         (error, uploadedImg) => {
             if(error) {
+                console.log('fifth')
                 return res.status(422).render('admin/edit-prod', {
                     title: 'Add Product',
                     path: '/addEdit-product',
@@ -86,23 +86,29 @@ exports.postAddProduct = (req, res, next) => {
             image = uploadedImg.secure_url
         }
     )
+
     const product = new Product({ 
         name, image,
         location: {
-            type: String,
-            coordinates: [ lat, long]
+            "type": "Point",
+            "coordinates": [ Number(lat), Number(long)]
         },
         user: req.user 
         // user: req.user => mongoose understands to store just 
         // the user._id and not all values
     })
-    // keys point at prod schema while values point at const variable defined
-    product.save()
-        .then(result => {
-            console.log('Successfully created product')
-            res.redirect('/')
-        })
-        .catch(err => technicalErrorCtr(next, err))
+    const user = await User.findById(req.user)
+    user.products.push(product)
+    await user.save()
+    
+    const prod = await product.save()
+    if(!prod){
+        const error = new Error('Error creating product')
+        error.httpStatusCode = 500
+        return next(error) 
+    }
+    console.log('Successfully created product')
+    res.redirect('/')
 }
 
 exports.getMyProduct = (req, res, next) => {
@@ -245,12 +251,12 @@ exports.deleteProduct = (req, res, next) => {
 /* 
 USER CONTROLLERS
 */
-exports.showIndex = (req, res, next) => {
+exports.showIndex = async (req, res, next) => {
     const page = +req.query.page || 1//plus ensures I always have an int
     // fetched from param passed into index.ejs file (value after equal sign)
     let prodQty;
 
-    Product.find()
+    await Product.find()
         .countDocuments()
         .then(prodQuantity => {
             prodQty = prodQuantity

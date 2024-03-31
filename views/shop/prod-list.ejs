@@ -13,11 +13,11 @@
                             <h1 class="product__title"><%= product.name %></h1>
                         </header>
                         <div class="card__image">
-                            <img src="/<%= product.image %>" alt="<%= product.name %>">
+                            <img src="<%= product.image %>" alt="<%= product.name %>">
                         </div>
                         <div class="card__content">
                             <h2 class="product__price">$<%= product.location %></h2>
-                            <% prods.comments.forEach(comment => { %>
+                            <% product.comments.forEach(comment => { %>
                                 <p class="product__description"><%= comment.message %></p>
                             <% }) %>
                         </div>
