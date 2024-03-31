@@ -26,24 +26,24 @@ const dbStore = new mongodbStore({
     collection: 'sessions'
 })
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'images')
-        // passing null as error value
-    },
-    filename: (req, file, cb) => {
-        const namepref = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, namepref + '-' + file.originalname)
-        // using current date for image uniqueness
-    }
-})
-const filter = (req, file, cb) => {
-    if(file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg'){
-        cb(null, true)
-    } else {
-        cb(null, false)
-    }
-}
+// const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//         cb(null, 'images')
+//         // passing null as error value
+//     },
+//     filename: (req, file, cb) => {
+//         const namepref = Date.now() + '-' + Math.round(Math.random() * 1E9)
+//         cb(null, namepref + '-' + file.originalname)
+//         // using current date for image uniqueness
+//     }
+// })
+// const filter = (req, file, cb) => {
+//     if(file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg'){
+//         cb(null, true)
+//     } else {
+//         cb(null, false)
+//     }
+// }
 
 /* function calls */
 const app = express();
@@ -52,7 +52,10 @@ const csrfProtect = csrf(); // cookie helps identify server-side session
 
 /* middlewares for json data, files, styles, and images */
 app.use(bp.urlencoded({extended: false})) // all inputs to texts
-app.use(multer({ storage: storage, fileFilter: filter}).single('image')) // single param is form name
+// app.use(multer({ storage: storage, fileFilter: filter}).single('image')) // single param is form name
+
+// ensure uploading of images into a folder accessible locally
+app.use(multer({ dest: 'images/'}).single('image')) // single param is form name
 
 app.use(express.static(path.join(__dirname, 'public'))) // accessing static files
 app.use('/images', express.static(path.join(__dirname, 'images')))

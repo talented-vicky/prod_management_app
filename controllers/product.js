@@ -1,7 +1,15 @@
-const Product = require('../models/product')
+const Product = require('../models/product');
+const cloudinary = require('cloudinary').v2
 
-const urlPathDelete = require('../helper/url')
-const { validationResult } = require('express-validator')
+// const urlPathDelete = require('../helper/url')
+const { validationResult } = require('express-validator');
+const { cloudinary_api_key, cloudinary_api_secret, cloudinary_name } = require('../config/keys');
+
+cloudinary.config({
+    cloud_name: cloudinary_name,
+    api_key: cloudinary_api_key,
+    api_secret: cloudinary_api_secret
+})
 
 const technicalErrorCtr = (nexxx, err) => {
     const error = new Error(err)
@@ -15,9 +23,9 @@ const item_per_page = 2;
 ADMIN CONTROLLERS
 */
 exports.getAddProduct = (req, res, next) => {
-    res.render('admin/edit-product', {
+    res.render('admin/edit-prod', {
         // the above is an ejs file in an admin folder
-        pageTitle: 'Add Product',
+        title: 'Add Product',
         path: '/addEdit-product',
         // the above is the path in the nev.ejs file
         editing: false,
@@ -29,28 +37,29 @@ exports.getAddProduct = (req, res, next) => {
 }
 
 exports.postAddProduct = (req, res, next) => {
-    const title = req.body.title
-    const image = req.file
-    const price = req.body.price
-    const des = req.body.description
+    const { name, lat, long } = req.body
+    // const image = req.file
+    let image
+    const initImage = req.file.path
+
     const errors = validationResult(req)
     console.log(image)
 
     if(!image){
-        return res.status(422).render('admin/edit-product', {
-            pageTitle: 'Add Product',
+        return res.status(422).render('admin/edit-prod', {
+            title: 'Add Product',
             path: '/addEdit-product',
             editing: false,
             errorPresent: true,
             addprodError: 'Attached file is not an image',
-            prod: { title: title, price: price, description: des },
+            prod: { name, lat, long },
             errorArray: []
         }) 
     }
 
     if(!errors.isEmpty()){
-        return res.status(422).render('admin/edit-product', {
-            pageTitle: 'Add Product',
+        return res.status(422).render('admin/edit-prod', {
+            title: 'Add Product',
             path: '/addEdit-product',
             editing: false,
             errorPresent: true,
@@ -58,12 +67,33 @@ exports.postAddProduct = (req, res, next) => {
             prod: { title: title, price: price, description: des },
             errorArray: errors.array()
         })
-    }
+    }   
 
+    cloudinary.uploader.upload(
+        initImage,
+        (error, uploadedImg) => {
+            if(error) {
+                return res.status(422).render('admin/edit-prod', {
+                    title: 'Add Product',
+                    path: '/addEdit-product',
+                    editing: false,
+                    errorPresent: true,
+                    addprodError: 'Error uploading image',
+                    prod: { name, lat, long },
+                    errorArray: []
+                }) 
+            }
+            image = uploadedImg.secure_url
+        }
+    )
     const product = new Product({ 
-        title: title, imageUrl: image.path, price: price, 
-        description: des, userId: req.user 
-        // userId: req.user => mongoose understands to store just 
+        name, image,
+        location: {
+            type: String,
+            coordinates: [ lat, long]
+        },
+        user: req.user 
+        // user: req.user => mongoose understands to store just 
         // the user._id and not all values
     })
     // keys point at prod schema while values point at const variable defined
@@ -93,9 +123,9 @@ exports.getMyProduct = (req, res, next) => {
             // the above is now the field I wanna display 4rm what I've selected        
         })
         .then(product => {
-            res.render('admin/show-product', {
+            res.render('admin/show-prod', {
                 prods: product,
-                pageTitle: 'Admin All Products',
+                title: 'Admin All Products',
                 path: '/show-product',
                 currentPage: page,
                 prevPage: page - 1,
@@ -121,8 +151,8 @@ exports.getEditProduct = (req, res, next) =>{
             if(!product){
                 res.redirect('/')
             }
-            res.render('admin/edit-product', {
-                pageTitle: 'Edit Product',
+            res.render('admin/edit-prod', {
+                title: 'Edit Product',
                 path: '/onlyEdit-product',
                 editing: editMode,
                 errorPresent: false,
@@ -146,8 +176,8 @@ exports.postEditProduct = (req, res, next) => {
     const errors = validationResult(req)
     
     if(!errors.isEmpty()){
-        return res.status(422).render('admin/edit-product', {
-            pageTitle: 'Edit Product',
+        return res.status(422).render('admin/edit-prod', {
+            title: 'Edit Product',
             path: '/onlyEdit-product',
             editing: true,
             errorPresent: true,

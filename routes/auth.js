@@ -50,10 +50,10 @@ router.post('/signup',
     body('fullname', "name cannnot be blank")
         .trim().not().isEmpty()
         .withMessage("name cannnot be blank"),
-    body('lat', 'Latitude must be an integer')
-        .isNumeric(),
-    body('long', 'Longitude must be an integer')
-        .isNumeric(),
+    body('lat', 'Latitude should contain decimal point numbers')
+        .isFloat(),
+    body('long', 'Longitude should contain decimal point numbers')
+        .isFloat(),
     body('password', 'Password should contain at least 8 char to include numbers and aphabets')
         .isLength({min: 8, max: 19}).isAlphanumeric().trim(),
     body('confirmPassword')

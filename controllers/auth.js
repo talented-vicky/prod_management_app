@@ -31,9 +31,11 @@ exports.getSignup = (req, res, next) => {
         isAuth: false,
         signupError: null,
         inputValue: {
+            fullname: "",
             email: "",
             password: "",
-            // add location here
+            lat: 0,
+            long: 0,
         },
         errorsArray: []
     })
