@@ -148,14 +148,14 @@ testusergmail4
 /*
 add comment functionality
 1. add text area input field -- DONE
-2. when send is clicked, notify product owner of the comment
+2. when send is clicked, notify product owner of the comment -- DONE
 3. ensure comments only show in "admin section of products" -- DNOE
 4. only logged in users should be able to add comments -- DONE
 
 ensure logged in user can see products in the regions of their 
-specified location gotten upon sign up
+specified location gotten upon sign up --TO-DO
 
-make location adding seamless
+make location adding seamless -- DONE
 
 sync data to firestore
 */
