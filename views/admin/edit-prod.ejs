@@ -54,6 +54,9 @@
                 >
             </div>
 
+            <label for="location-getter"> Use my current location instead</label>
+            <button type="button" id="getLocationBtn">Get Location</button>
+
             <% if(editing) { %>
                 <input type="hidden" name="productId" value="<%= prod._id %>">
             <% } %>
@@ -62,5 +65,21 @@
             <button class="btn" type="submit"> <% if(editing) { %>Update Product<% } else { %>Add Product<% } %> </button>
         </form>
     </main>
+
+    <script>
+        document.getElementById('getLocationBtn').addEventListener('click', function() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('lat').value = position.coords.latitude;
+                    document.getElementById('long').value = position.coords.longitude;
+                    
+                }, function(error) {
+                    console.error('Error getting location:', error);
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        });
+    </script>
 
 <%- include('../includes/tail.ejs')%>

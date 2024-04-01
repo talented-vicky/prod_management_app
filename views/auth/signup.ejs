@@ -33,7 +33,7 @@
                 <label for="lat">Latitude</label>
                 <input 
                     class="<%= errorsArray.find(arr => arr.param === 'lat') ? 'invalid' : '' %>"
-                    type="number" name="lat" id="lat" step=".00001"
+                    type="number" name="lat" id="lat" step=".0000001"
                     value="<%= inputValue.lat %>"
                 >
             </div>
@@ -42,10 +42,14 @@
                 <label for="long">Longitude</label>
                 <input 
                     class="<%= errorsArray.find(arr => arr.param === 'long') ? 'invalid' : '' %>"
-                    type="number" name="long" id="long" step=".00001"
+                    type="number" name="long" id="long" step=".0000001"
                     value="<%= inputValue.long %>"
                 >
             </div>
+
+            <label for="location-getter"> Use my current location instead</label>
+            <button type="button" id="getLocationBtn">Get Location</button>
+            <!-- this button simply changes the input default values -->
 
             <div class="form__container">
                 <label for="pass">Password</label>
@@ -70,5 +74,22 @@
             <button class="btn" type="submit"> Signup </button>
         </form>
     </main>
+
+
+    <script>
+        document.getElementById('getLocationBtn').addEventListener('click', function() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('lat').value = position.coords.latitude;
+                    document.getElementById('long').value = position.coords.longitude;
+                    
+                }, function(error) {
+                    console.error('Error getting location:', error);
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        });
+    </script>
 
 <%- include('../includes/tail.ejs')%>
