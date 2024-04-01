@@ -17,9 +17,6 @@
                         </div>
                         <div class="card__content">
                             <h2 class="product__price">$<%= product.location %></h2>
-                            <% product.comments.forEach(comment => { %>
-                                <p class="product__description"><%= comment.message %></p>
-                            <% }) %>
                         </div>
                     </article>
                 <% }) %>

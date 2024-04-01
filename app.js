@@ -141,4 +141,21 @@ mongoose.connect(database_connection_url)
 /*
 add comment functionality
 implement product location search
+testusergmail4
     */
+
+
+/*
+add comment functionality
+1. add text area input field -- DONE
+2. when send is clicked, notify product owner of the comment
+3. ensure comments only show in "admin section of products" -- DNOE
+4. only logged in users should be able to add comments -- DONE
+
+ensure logged in user can see products in the regions of their 
+specified location gotten upon sign up
+
+make location adding seamless
+
+sync data to firestore
+*/

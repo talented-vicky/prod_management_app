@@ -1,0 +1,16 @@
+<%- include('../includes/head.ejs')%>
+</head>
+
+<body>
+    <%- include('../includes/nav.ejs')%>
+    <main class="centered">
+        <h1> <%= prod.name %> </h1>
+        <hr>
+        <h2> Suceessfully sent message %></h2>
+        <div class="msg__box">
+            <h4> Your comment on "<i> <%= prod.name %> </i>" has been sent to -- "<i> <%= user.fullname %> </i>"</h4>
+            <p> This message is also now delivered to <%= user.email %></p>
+        </div>
+    </main> 
+
+<%- include('../includes/tail.ejs')%>

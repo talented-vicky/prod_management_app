@@ -16,10 +16,26 @@
                             <img src="<%= product.image %>" alt="<%= product.name %>">
                         </div>
                         <div class="card__content">
-                            <h2 class="product__price">$<%= product.location %></h2>
-                            <% product.comments.forEach(comment => { %>
-                                <p class="product__description"><%= comment.message %></p>
-                            <% }) %>
+                            <% if(isAuth) { %>
+                                <form action="/admin/comment/add/<%= product._id %>" method="post">
+                                    <div id="comment__box" style="display: none;">
+                                        <textarea class="" name="comment" id="des" cols="35" rows="3"></textarea>
+                                    </div>
+                                    <div id="comment__btn">
+                                        <button type="button" id="showComment">
+                                            <p> Show comment box </p>
+                                        </button>
+                                    </div>
+                                    <div id="send__btn" style="display: none;">
+                                        <button type="submit" id="showComment"> <p>Send</p> </button>
+                                    </div>
+                                    
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                </form>
+                            <% } %>
+                            <% if(!isAuth) { %>
+                                <h3 class="product__comment"> Login to send comments </h3>
+                            <% } %>
                         </div>
                         <div class="card__actions">
                             <a href="/products/<%= product._id %>" class="btn"> 
@@ -47,6 +63,17 @@
         <% } else { %>
             <h1>No  Products Entered</h1>
         <% } %>
+
+        <script>
+            document.getElementById('showComment').addEventListener('click',
+                function() {
+                    document.getElementById('comment__box').style.display = 'block'
+                    document.getElementById('comment__btn').style.display = 'none'
+                    document.getElementById('send__btn').style.display = 'block'
+                    
+                }
+            )
+        </script>
     </main>
 
 <%- include('../includes/tail.ejs')%>

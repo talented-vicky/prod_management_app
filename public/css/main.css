@@ -99,6 +99,14 @@ main {
     margin: 0 0.25rem;
 }
 
+.card .product__location {
+    font-size: 1.3rem;
+}
+.card .product__comment {
+    font-size: 1.1rem;
+    color: #7777ff;
+}
+
 .btn {
     font: inherit;
     border: 1px solid #2c2ccc;

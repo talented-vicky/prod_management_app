@@ -1,9 +1,11 @@
 const Product = require('../models/product');
+const Comment = require('../models/comment');
 const cloudinary = require('cloudinary').v2
 
 // const urlPathDelete = require('../helper/url')
 const { validationResult } = require('express-validator');
 const { cloudinary_api_key, cloudinary_api_secret, cloudinary_name } = require('../config/keys');
+const { notifyUser } = require('../config/sendmail');
 
 const User = require('../models/user')
 
@@ -111,6 +113,43 @@ exports.postAddProduct = async (req, res, next) => {
     res.redirect('/')
 }
 
+exports.sendComment = async (req, res, next) => {
+    const { comment } = req.body;
+    const prodID = req.params.prodId;
+
+    const sender = await User.findById(req.user)
+    if(!sender){
+        technicalErrorCtr(next, "User does not exist")
+    }
+    
+    const product = await Product.findById(prodID)
+    if(!product){
+        technicalErrorCtr(next, "User does not exist")
+    }
+
+    const owner = await User.findById(product.user)
+    if(!owner){
+        technicalErrorCtr(next, "User does not exist")
+    }
+
+    res.render('shop/success-msg', {
+        prod: product,
+        title: product.title,
+        path: '/user-products',
+        user: owner
+        // it'll seem as if we're still on products page
+    })
+
+    const comm = new Comment({
+        message: comment,
+        user: req.user
+    })
+    owner.comments.push(comm)
+    await owner.save()
+
+    // now send mail
+    notifyUser(sender.email, owner.email, product.name)
+}
 exports.getMyProduct = (req, res, next) => {
     const page = +req.query.page || 1
     let prodQty;
@@ -118,11 +157,10 @@ exports.getMyProduct = (req, res, next) => {
         .countDocuments()
         .then(docCount => {
             prodQty = docCount
-            return Product.find({userId: req.user._id}) // confirming if it's logged in user
+            return Product.find({user: req.user._id}) // confirming if it's logged in user
                     .skip((page - 1) * item_per_page)
                     .limit(item_per_page)
             // check app.js file for user initialization (req.user = user)
-            // .select('title price -_id')
             // now I'm fetching just title and price, _id is automatically fetched
             // so I had to exclude it if I didn't want to retrieve it 4rm database
             // .populate('userId')
@@ -256,69 +294,68 @@ exports.showIndex = async (req, res, next) => {
     // fetched from param passed into index.ejs file (value after equal sign)
     let prodQty;
 
-    await Product.find()
-        .countDocuments()
-        .then(prodQuantity => {
-            prodQty = prodQuantity
-            return Product.find()
-                .skip((page - 1) * item_per_page)
-                .limit(item_per_page)
-        })
-        .then(product => {
-            res.render('shop/index', {
-                prods: product, 
-                title: 'Index Page',
-                path: '/',
-                currentPage: page,
-                nextPage: page + 1,
-                prevPage: page - 1,
-                hasNextpage: (page * item_per_page) < prodQty,
-                // hasPrevpage: prodQty < 1,
-                semilastPage: Math.ceil(prodQty / item_per_page) - 1,
-                lastPage: Math.ceil(prodQty / item_per_page)
-            })
-        })
-        .catch(err => technicalErrorCtr(next, err))
+    const prodQuantity = await Product.find().countDocuments()
+    if(!prodQuantity){
+        technicalErrorCtr(next, "Error findind document count")
+    }
+    prodQty = prodQuantity
+    const product = await Product.find().skip((page - 1) * item_per_page).limit(item_per_page)
+
+    if(!product){
+        technicalErrorCtr(next, "Error finding product")
+    }
+    res.render('shop/index', {
+        prods: product, 
+        title: 'Index Page',
+        path: '/',
+        currentPage: page,
+        nextPage: page + 1,
+        prevPage: page - 1,
+        hasNextpage: (page * item_per_page) < prodQty,
+        // hasPrevpage: prodQty < 1,
+        semilastPage: Math.ceil(prodQty / item_per_page) - 1,
+        lastPage: Math.ceil(prodQty / item_per_page)
+    })
 }
 
-exports.showProducts = (req, res, next) => {
+exports.showProducts = async (req, res, next) => {
     const page = +req.query.page || 1
     let totalQty;
         
-    Product.find()
-        .countDocuments()
-        .then(docCount => {
-            totalQty = docCount
-            return Product.find()
-                .skip((page - 1) * item_per_page)
-                .limit(item_per_page)
-        })
-        .then(product => {
-            res.render('shop/prod-list', {
-                prods: product, 
-                title: 'Shop Page',
-                path: '/user-products',
-                currentPage: page,
-                prevPage: page - 1,
-                nextPage: page + 1,
-                hasNextpage: (page * item_per_page) < totalQty,
-                semilastPage: Math.ceil(totalQty / item_per_page) - 1,
-                lastPage: Math.ceil(totalQty / item_per_page)
-            })
-        })
-        .catch(err => technicalErrorCtr(next, err))
+    const docCount = await Product.find().countDocuments()
+    if(!docCount){
+        technicalErrorCtr(next, "Error finding document count")
+    }       
+    totalQty = docCount
+    const product = await Product.find().skip((page - 1) * item_per_page).limit(item_per_page)
+    
+    if(!product){
+        technicalErrorCtr(next, "Error finding product")
+    }
+    res.render('shop/prod-list', {
+        prods: product, 
+        title: 'Shop Page',
+        path: '/user-products',
+        currentPage: page,
+        prevPage: page - 1,
+        nextPage: page + 1,
+        hasNextpage: (page * item_per_page) < totalQty,
+        semilastPage: Math.ceil(totalQty / item_per_page) - 1,
+        lastPage: Math.ceil(totalQty / item_per_page)
+    })
 }
 
-exports.showSingleProduct = (req, res, next) => {
+exports.showSingleProduct = async (req, res, next) => {
     const productId = req.params.prodId
-    Product.findById(productId)
-        .then(product => {
-            res.render('shop/prod-detail', {
-                prod: product,
-                title: product.title,
-                path: '/user-products'
-                // it'll seem as if we're still on products page
-            })
-        })
-        .catch(err => technicalErrorCtr(next, err))
+
+    const product = await Product.findById(productId)
+    if(!product){
+        technicalErrorCtr(next, "Error finding product")
+    }
+    res.render('shop/prod-details', {
+        prod: product,
+        title: product.title,
+        path: '/user-products'
+        // it'll seem as if we're still on products page
+    })
 }

@@ -1,5 +1,6 @@
 const  bcrypt = require('bcryptjs')
 const { validationResult } = require('express-validator')
+const { welcomeUser } = require('../config/sendmail')
 
 const User = require('../models/user')
 
@@ -102,6 +103,8 @@ exports.postSignup = (req, res, next) => {
     
     const errors = validationResult(req)
 
+    let newUser;
+
     if(!errors.isEmpty()){ 
         // false means there are errors
         console.log(errors.array()) // check this to understand code in the future
@@ -132,10 +135,12 @@ exports.postSignup = (req, res, next) => {
                     "coordinates": [ Number(lat), Number(long)]
                 }
             })
+            newUser = user
             return user.save()
         })
         .then(result => {
             console.log('Successfully created account')
+            welcomeUser(newUser.email)
             res.redirect('/login')
 
             // return transporter.sendMail({

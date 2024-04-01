@@ -24,6 +24,8 @@ router.post('/product',
     prodController.postAddProduct
 );
 
+router.post('/comment/add/:prodId', authController, prodController.sendComment);
+
 // this one is /admin/show-product
 router.get('/show-prod', authController, prodController.getMyProduct);
 
