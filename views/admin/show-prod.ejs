@@ -16,7 +16,7 @@
                             <img src="<%= product.image %>"  alt="<%= product.name %>">
                         </div>
                         <div class="card__content">
-                            <h2 class="product__price">$<%= product.location.latitude %></h2>
+                            <h2 class="product__price"><%= product.location %></h2>
                             <% product.comments.forEach(comment => { %>
                                 <p class="product__description"><%= comment.message %></p>
                                 <p class="product__description">Commented by: <%= comment.user %></p>
@@ -42,17 +42,17 @@
             </div>
             <section class="pagination">
                 <% if(currentPage != 1) { %>
-                    <a href="/admin/show-product/?page=1">1</a>
+                    <a href="/admin/show-prod/?page=1">1</a>
                 <% } %>
                 <% if(prevPage && prevPage != 1) { %>
-                    <a href="/admin/show-product/?page=<%= prevPage %>"> <%= prevPage %></a>
+                    <a href="/admin/show-prod/?page=<%= prevPage %>"> <%= prevPage %></a>
                 <% } %>
-                <a href="/admin/show-product/?page=<%= currentPage %>" class="active"> <%= currentPage %></a>
+                <a href="/admin/show-prod/?page=<%= currentPage %>" class="active"> <%= currentPage %></a>
                 <% if(hasNextpage && nextPage != lastPage) { %>
-                    <a href="/admin/show-product/?page=<%= nextPage %>"> <%= nextPage %></a>
+                    <a href="/admin/show-prod/?page=<%= nextPage %>"> <%= nextPage %></a>
                 <% } %>
                 <% if(lastPage && lastPage != currentPage) { %>
-                    <a href="/admin/show-product/?page=<%= lastPage %>"> <%= lastPage %></a>
+                    <a href="/admin/show-prod/?page=<%= lastPage %>"> <%= lastPage %></a>
                 <% } %>
             </section>
         <% } else { %>

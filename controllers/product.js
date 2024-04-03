@@ -1,13 +1,17 @@
+const cloudinary = require('cloudinary').v2
+const admin = require('firebase-admin');
+
+const { firestore } = require('../config/firestore');
+
 const Product = require('../models/product');
 const Comment = require('../models/comment');
-const cloudinary = require('cloudinary').v2
+const User = require('../models/user')
 
 // const urlPathDelete = require('../helper/url')
 const { validationResult } = require('express-validator');
 const { cloudinary_api_key, cloudinary_api_secret, cloudinary_name } = require('../config/keys');
 const { notifyUser } = require('../config/sendmail');
 
-const User = require('../models/user')
 
 cloudinary.config({
     cloud_name: cloudinary_name,
@@ -93,7 +97,7 @@ exports.postAddProduct = async (req, res, next) => {
         name, image,
         location: {
             "type": "Point",
-            "coordinates": [ Number(lat), Number(long)]
+            "coordinates": [ Number(long), Number(lat)]
         },
         user: req.user 
         // user: req.user => mongoose understands to store just 
@@ -109,6 +113,26 @@ exports.postAddProduct = async (req, res, next) => {
         error.httpStatusCode = 500
         return next(error) 
     }
+
+    // // now add to firestore
+    // createfsDB = async () => {
+    //     firestore()
+    //     const db = admin.firestore();
+    //     const coll = db.collection('products');
+    //     let doc = coll.doc(prod._id);
+
+    //     const prodDoc = await doc.set({
+    //         name, imageUrl: image,
+    //         location: {
+    //             latitude: lat,
+    //             longitude: long,
+    //         }
+    //     })
+    //     res.send(prodDoc)
+    // }
+
+    // createfsDB()
+
     console.log('Successfully created product')
     res.redirect('/')
 }
@@ -150,37 +174,91 @@ exports.sendComment = async (req, res, next) => {
     // now send mail
     notifyUser(sender.email, owner.email, product.name)
 }
-exports.getMyProduct = (req, res, next) => {
+
+exports.getMyProduct = async (req, res, next) => {
     const page = +req.query.page || 1
     let prodQty;
-    Product.find()
-        .countDocuments()
-        .then(docCount => {
-            prodQty = docCount
-            return Product.find({user: req.user._id}) // confirming if it's logged in user
-                    .skip((page - 1) * item_per_page)
-                    .limit(item_per_page)
-            // check app.js file for user initialization (req.user = user)
-            // now I'm fetching just title and price, _id is automatically fetched
-            // so I had to exclude it if I didn't want to retrieve it 4rm database
-            // .populate('userId')
-            // the above is now the field I wanna display 4rm what I've selected        
-        })
-        .then(product => {
-            res.render('admin/show-prod', {
-                prods: product,
-                title: 'Admin All Products',
-                path: '/show-product',
-                currentPage: page,
-                prevPage: page - 1,
-                nextPage: page + 1,
-                hasNextpage: (page * item_per_page) < prodQty,
-                semilastPage: Math.ceil(prodQty / item_per_page) - 1,
-                lastPage: Math.ceil(prodQty / item_per_page)
-            })
-        })
-        .catch(err => technicalErrorCtr(next, err))
+    
+    const docCount = await Product.find({user: req.user._id}).countDocuments()
+    // counting only documents for currently logged in user
+    if(!docCount){
+        technicalErrorCtr(next, "Unable to get document count")
+    }
+    prodQty = docCount
+
+    const product = await Product.find({user: req.user._id}) 
+                .skip((page - 1) * item_per_page).limit(item_per_page)
+    // the above is now the field I wanna display 4rm what I've selected
+    if(!product){
+        technicalErrorCtr(next, "No Product Found")
+    }
+        
+    res.render('admin/show-prod', {
+        prods: product,
+        title: 'Admin All Products',
+        path: '/show-product',
+        currentPage: page,
+        prevPage: page - 1,
+        nextPage: page + 1,
+        hasNextpage: (page * item_per_page) < prodQty,
+        semilastPage: Math.ceil(prodQty / item_per_page) - 1,
+        lastPage: Math.ceil(prodQty / item_per_page)
+    })
 }
+
+exports.showNearProducts = async (req, res, next) => {
+    const page = +req.query.page || 1
+    let totalQty;
+
+    const user = await User.findById(req.user)
+    if(!user){
+        technicalErrorCtr(next, "User Not Found in database")
+    }
+        
+    const docCount = await Product.aggregate([
+        {
+            $geoNear: {
+                near: user.address,
+                distanceField: "distance",
+                maxDistance: 20000,
+                spherical: true
+            }
+        }
+    ]).count()
+    if(!docCount){
+        technicalErrorCtr(next, "Error finding document count")
+    }       
+    totalQty = docCount
+
+    // get products near this user
+    const nearProd = await Product.aggregate([
+        {
+            $geoNear: {
+                near: user.address,
+                distanceField: "distance",
+                maxDistance: 20000,
+                spherical: true
+            }
+        }
+    ]).skip((page - 1) * item_per_page).limit(item_per_page)
+    
+    if(!nearProd){
+        technicalErrorCtr(next, "Error finding product")
+    }
+    
+    res.render('admin/near-prod', {
+        prods: nearProd, 
+        title: 'Products Near Me',
+        path: '/near-product',
+        currentPage: page,
+        prevPage: page - 1,
+        nextPage: page + 1,
+        hasNextpage: (page * item_per_page) < totalQty,
+        semilastPage: Math.ceil(totalQty / item_per_page) - 1,
+        lastPage: Math.ceil(totalQty / item_per_page)
+    })
+}
+
 
 exports.getEditProduct = (req, res, next) =>{
     const editMode = req.query.edit

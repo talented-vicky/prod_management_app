@@ -158,4 +158,8 @@ specified location gotten upon sign up --TO-DO
 make location adding seamless -- DONE
 
 sync data to firestore
+
+fix bug of pagination showing on user's personal product page
+when there are actually no items in the next page
 */
+

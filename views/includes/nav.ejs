@@ -5,6 +5,7 @@
             <li class="main-header__item"><a class="<%= path === '/user-products' ? 'active' : '' %>" href="/products">Products</a></li>
             <% if(isAuth) { %>
                 <li class="main-header__item"><a class="<%= path === '/addEdit-product' ? 'active' : '' %>" href="/admin/edit-prod">Add Product</a></li>
+                <li class="main-header__item"><a class="<%= path === '/near-product' ? 'active' : '' %>" href="/admin/near-prod">Products Near Me</a></li>
                 <li class="main-header__item"><a class="<%= path === '/show-product' ? 'active' : '' %>" href="/admin/show-prod">My Products</a></li>
             <% } %>
         </ul>

@@ -29,6 +29,8 @@ router.post('/comment/add/:prodId', authController, prodController.sendComment);
 // this one is /admin/show-product
 router.get('/show-prod', authController, prodController.getMyProduct);
 
+router.get('/near-prod', authController, prodController.showNearProducts);
+
 // this one is /admin/edit-product/:prodId
 router.get('/edit-prod/:prodId', authController, prodController.getEditProduct)
 
