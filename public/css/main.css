@@ -43,6 +43,22 @@ main {
     color: #f588e6;;
 }
 
+.logout-btn button{
+    font-size: .95rem;
+    background: none;
+    color: #d6d4d4;
+}
+
+.logout-btn :hover{
+    color: rgb(228, 9, 9);
+}
+
+.logout-btn .fas {
+    font-size: 1.4em;
+    margin-right: .2rem;
+    color: white;
+    text-shadow: 1px 1px 1px grey;
+}
 
 
 /* display */

@@ -1,3 +1,7 @@
+<%- include('../includes/head.ejs')%>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+</head>
+
 <header class="main-header">
     <nav class="main-header__nav">
         <ul class="main-header__item-list">
@@ -13,15 +17,16 @@
         <ul class="main-header__item-list">
             <% if(!isAuth) { %>
                 <li class="main-header__item">
-                    <a class="<%= path === '/main-login' ? 'active' : '' %>" href="/login">Login</a>
+                    <a class="<%= path === '/main-login' ? 'active' : '' %>" href="/login"> Login </a>
                 </li>
                 <li class="main-header__item">
                     <a class="<%= path === '/main-signup' ? 'active' : '' %>" href="/signup">Signup</a>
                 </li>
             <% } else { %>
                 <li class="main-header__item">
-                    <form action="/logout" method="post">
+                    <form class="logout-btn" action="/logout" method="post">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <i class="fas fa-power-off"></i>
                         <button type="submit"> Logout </button> 
                     </form>
                 </li>

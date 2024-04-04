@@ -153,13 +153,16 @@ add comment functionality
 4. only logged in users should be able to add comments -- DONE
 
 ensure logged in user can see products in the regions of their 
-specified location gotten upon sign up --TO-DO
+specified location gotten upon sign up -- DONE
 
 make location adding seamless -- DONE
 
 sync data to firestore
 
 fix bug of pagination showing on user's personal product page
-when there are actually no items in the next page
+when there are actually no items in the next page -- DONE
+
+show logout icon next to text and add confirmation dialogue
+after a user clicks this
 */
 
