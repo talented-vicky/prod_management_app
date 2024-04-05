@@ -9,7 +9,8 @@
         <div>
             <img src="<%= prod.image %>" alt="<%= prod.name %>">
         </div>
-        <h2> <%= prod.location %></h2>      
+        <h2> Lat: <%= prod.location.coordinates[1] %>&deg; </h2>      
+        <h2> Long: <%= prod.location.coordinates[0] %>&deg; </h2>      
     </main> 
 
 <%- include('../includes/tail.ejs')%>

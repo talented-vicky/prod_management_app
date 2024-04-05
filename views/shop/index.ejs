@@ -16,7 +16,8 @@
                             <img src="<%= product.image %>" alt="<%= product.name %>">
                         </div>
                         <div class="card__content">
-                            <h2 class="product__price">$<%= product.location %></h2>
+                            <h2 class="product__price">Lat: <%= product.location.coordinates[1] %>&deg; </h2>
+                            <h2 class="product__price"> Long: <%= product.location.coordinates[0] %>&deg; </h2>
                         </div>
                     </article>
                 <% }) %>

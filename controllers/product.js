@@ -103,35 +103,59 @@ exports.postAddProduct = async (req, res, next) => {
         // user: req.user => mongoose understands to store just 
         // the user._id and not all values
     })
-    const user = await User.findById(req.user)
-    user.products.push(product)
-    await user.save()
+
+    // sync data to firestore
+    createfsDB = async () => {
+        try {
+            firestore()
+            const userProducts = await Product.find({ user: req.user })
     
-    const prod = await product.save()
-    if(!prod){
-        const error = new Error('Error creating product')
-        error.httpStatusCode = 500
-        return next(error) 
+            const db = admin.firestore();
+            const userRef = db.collection('users').doc(req.user.toString());
+    
+            const userSnp = userRef.get()
+            if(!userSnp.exists){
+                // user doesn't already exist, hence create product collection
+                await userRef.set({ products: [] })
+            }
+            
+            const batch = db.batch()
+            const prodRef = userRef.collection('products')
+            
+            // push this product to firestore
+            userProducts.forEach(prod => {
+                const prodDocRef = prodRef.doc(prod._id.toString())
+                batch.set(prodDocRef, {
+                    "name": prod.name,
+                    "image": prod.image,
+                    "location": {
+                        lat: prod.location.coordinates[1],
+                        long: prod.location.coordinates[0]
+                    },
+                    "user": prod.user.toString(),
+                })
+            })
+            await batch.commit()
+
+            
+            // if firestor operation succeeds, save into database
+            const user = await User.findById(req.user)
+            user.products.push(product)
+            await user.save()
+            
+            const prod = await product.save()
+            if(!prod){
+                const error = new Error('Error creating product')
+                error.httpStatusCode = 500
+                return next(error) 
+            }
+        } catch (error) {
+            console.log(error)
+            throw error;
+        }
     }
 
-    // // now add to firestore
-    // createfsDB = async () => {
-    //     firestore()
-    //     const db = admin.firestore();
-    //     const coll = db.collection('products');
-    //     let doc = coll.doc(prod._id);
-
-    //     const prodDoc = await doc.set({
-    //         name, imageUrl: image,
-    //         location: {
-    //             latitude: lat,
-    //             longitude: long,
-    //         }
-    //     })
-    //     res.send(prodDoc)
-    // }
-
-    // createfsDB()
+    createfsDB()
 
     console.log('Successfully created product')
     res.redirect('/')
@@ -215,7 +239,7 @@ exports.showNearProducts = async (req, res, next) => {
         technicalErrorCtr(next, "User Not Found in database")
     }
         
-    const docCount = await Product.aggregate([
+    const aggDocument = await Product.aggregate([
         {
             $geoNear: {
                 near: user.address,
@@ -224,7 +248,8 @@ exports.showNearProducts = async (req, res, next) => {
                 spherical: true
             }
         }
-    ]).count()
+    ])
+    const docCount = aggDocument.length
     if(!docCount){
         technicalErrorCtr(next, "Error finding document count")
     }       
