@@ -1,7 +1,7 @@
 const cloudinary = require('cloudinary').v2
-const admin = require('firebase-admin');
+// const admin = require('firebase-admin');
 
-const { firestore } = require('../config/firestore');
+// const { firestore } = require('../config/firestore');
 
 const Product = require('../models/product');
 const Comment = require('../models/comment');
@@ -78,7 +78,6 @@ exports.postAddProduct = async (req, res, next) => {
         initImage,
         (error, uploadedImg) => {
             if(error) {
-                console.log('fifth')
                 return res.status(422).render('admin/edit-prod', {
                     title: 'Add Product',
                     path: '/addEdit-product',
@@ -104,59 +103,71 @@ exports.postAddProduct = async (req, res, next) => {
         // the user._id and not all values
     })
 
-    // sync data to firestore
-    createfsDB = async () => {
-        try {
-            firestore()
-            const userProducts = await Product.find({ user: req.user })
+    // // sync data to firestore
+    // createfsDB = async () => {
+    //     try {
+    //         firestore()
+    //         const userProducts = await Product.find({ user: req.user })
     
-            const db = admin.firestore();
-            const userRef = db.collection('users').doc(req.user.toString());
+    //         const db = admin.firestore();
+    //         const userRef = db.collection('users').doc(req.user.toString());
     
-            const userSnp = userRef.get()
-            if(!userSnp.exists){
-                // user doesn't already exist, hence create product collection
-                await userRef.set({ products: [] })
-            }
+    //         const userSnp = userRef.get()
+    //         if(!userSnp.exists){
+    //             // user doesn't already exist, hence create product collection
+    //             await userRef.set({ products: [] })
+    //         }
             
-            const batch = db.batch()
-            const prodRef = userRef.collection('products')
+    //         const batch = db.batch()
+    //         const prodRef = userRef.collection('products')
             
-            // push this product to firestore
-            userProducts.forEach(prod => {
-                const prodDocRef = prodRef.doc(prod._id.toString())
-                batch.set(prodDocRef, {
-                    "name": prod.name,
-                    "image": prod.image,
-                    "location": {
-                        lat: prod.location.coordinates[1],
-                        long: prod.location.coordinates[0]
-                    },
-                    "user": prod.user.toString(),
-                })
-            })
-            await batch.commit()
+    //         // push this product to firestore
+    //         userProducts.forEach(prod => {
+    //             const prodDocRef = prodRef.doc(prod._id.toString())
+    //             batch.set(prodDocRef, {
+    //                 "name": prod.name,
+    //                 "image": prod.image,
+    //                 "location": {
+    //                     lat: prod.location.coordinates[1],
+    //                     long: prod.location.coordinates[0]
+    //                 },
+    //                 "user": prod.user.toString(),
+    //             })
+    //         })
+    //         await batch.commit()
 
             
-            // if firestor operation succeeds, save into database
-            const user = await User.findById(req.user)
-            user.products.push(product)
-            await user.save()
+    //         // if firestor operation succeeds, save into database
+    //         const user = await User.findById(req.user)
+    //         user.products.push(product)
+    //         await user.save()
             
-            const prod = await product.save()
-            if(!prod){
-                const error = new Error('Error creating product')
-                error.httpStatusCode = 500
-                return next(error) 
-            }
-        } catch (error) {
-            console.log(error)
-            throw error;
-        }
+    //         const prod = await product.save()
+    //         if(!prod){
+    //             const error = new Error('Error creating product')
+    //             error.httpStatusCode = 500
+    //             return next(error) 
+    //         }
+    //     } catch (error) {
+    //         console.log(error)
+    //         throw error;
+    //     }
+    // }
+
+    // createfsDB()
+
+    // if firestor operation succeeds, save into database
+    const user = await User.findById(req.user)
+    user.products.push(product)
+    await user.save()
+    
+    const prod = await product.save()
+    if(!prod){
+        const error = new Error('Error creating product')
+        error.httpStatusCode = 500
+        return next(error) 
     }
-
-    createfsDB()
-
+    
     console.log('Successfully created product')
     res.redirect('/')
 }

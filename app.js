@@ -139,8 +139,8 @@ mongoose.connect(database_connection_url)
     })
 
 /*
-add comment functionality
-implement product location search
+add comment functionality -- DONE
+implement product location search 
 testusergmail4
     */
 
@@ -157,12 +157,14 @@ specified location gotten upon sign up -- DONE
 
 make location adding seamless -- DONE
 
-sync data to firestore
+sync data to firestore -- DONE
 
 fix bug of pagination showing on user's personal product page
 when there are actually no items in the next page -- DONE
 
 show logout icon next to text and add confirmation dialogue
-after a user clicks this
+after a user clicks this -- DONE
+
+fix bug of recently added product not syncing to firestore
 */
 

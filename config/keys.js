@@ -6,5 +6,6 @@ module.exports = {
     cloudinary_api_key: process.env.cloudinary_api_key,
     cloudinary_api_secret: process.env.cloudinary_api_secret,
     cloudinary_name: process.env.cloudinary_name,
-    sendgrid_api_key: process.env.sendgrid_api_key
+    sendgrid_api_key: process.env.sendgrid_api_key,
+    decrypt_passphrase: process.env.decrypt_passphrase
 }
