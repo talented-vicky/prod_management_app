@@ -42,68 +42,59 @@ exports.getSignup = (req, res, next) => {
     })
 }
 
-exports.postLogin = (req, res, next) => {
+exports.postLogin = async (req, res, next) => {
     const userEmail = req.body.email
     const userPassword = req.body.password
     const errors = validationResult(req)
 
-    // work on dynamic styling error on login form
+    try {
+        const user = await User.findOne({email: userEmail})
+        if(!user){
+            return res.status(422).render('auth/login', {
+                title: 'Login',
+                path: '/main-login',
+                loginError: "The user was not found in database, please sign up",
+                inputValue: {
+                    email: userEmail,
+                    password: userPassword
+                },
+                errorsArray: errors.array() // for css dynamic style
+            })
+        }
+        
+        const passwordMatch = await bcrypt.compare(userPassword, user.password)
+        if(!passwordMatch){
+            return res.status(422).render('auth/login', {
+                title: 'Login',
+                path: '/main-login',
+                loginError: 'password entered is incorrect',
+                inputValue: {
+                    email: userEmail,
+                    password: userPassword
+                },
+                errorsArray: errors.array()
+            })
+        }
 
-    User.findOne({email: userEmail})
-        .then(user => {
-            if(!user){
-                return res.status(422).render('auth/login', {
-                    title: 'Login',
-                    path: '/main-login',
-                    loginError: "The user was not found in database, please sign up",
-                    inputValue: {
-                        email: userEmail,
-                        password: userPassword
-                    },
-                    errorsArray: errors.array() // for css dynamic style
-                })
-            }
-            bcrypt.compare(userPassword, user.password)
-                .then(passwordMatch => {
-                    if(!passwordMatch){
-                        return res.status(422).render('auth/login', {
-                            title: 'Login',
-                            path: '/main-login',
-                            loginError: 'password entered is incorrect',
-                            inputValue: {
-                                email: userEmail,
-                                password: userPassword
-                            },
-                            errorsArray: errors.array()
-                        })
-                    }
-                    req.session.isLoggedIn = true
-                    req.session.user = user
-                    console.log('Passwords match and session initiated for this user')
-                    return req.session.save(err => {
-                        console.log(err)
-                        res.redirect('/')
-                        // I normally don't need to save but just to be sure my session
-                        // is saved before I continue due to that milisec gap stuff noticed
-
-                        // because a redirect is normally fired  independent of the session
-                        // and may finish hence trigger rendering of a new page before the 
-                        // session was updated in the server and db
-                    })
-                })
-                .catch(compareErr => console.log(compareErr))
+        req.session.isLoggedIn = true
+        req.session.user = user
+        console.log('Passwords match and session initiated for this user')
+        return req.session.save(err => {
+            console.log(err)
+            res.redirect('/')
         })
-        .catch(err => technicalErrorCtr(next, err))
+
+    } catch (error) {
+        technicalErrorCtr(next, error)
+    }
 }
 
-exports.postSignup = (req, res, next) => {
+exports.postSignup = async (req, res, next) => {
     const { fullname, lat, long } = req.body
     const userEmail = req.body.email
     const userPassword = req.body.password
     
     const errors = validationResult(req)
-
-    let newUser;
 
     if(!errors.isEmpty()){ 
         // false means there are errors
@@ -123,34 +114,23 @@ exports.postSignup = (req, res, next) => {
             errorsArray: errors.array()
         })
     }
-    bcrypt
-        .hash(userPassword, 12)
-        .then(hashedPassword => {
-            const user = new User({
-                fullname,
-                email: userEmail,
-                password: hashedPassword,
-                address: {
-                    "type": "Point",
-                    "coordinates": [ Number(long), Number(lat)]
-                }
-            })
-            newUser = user
-            return user.save()
-        })
-        .then(result => {
-            console.log('Successfully created account')
-            welcomeUser(newUser.email)
-            res.redirect('/login')
 
-            // return transporter.sendMail({
-            //     to: userEmail,
-            //     from: 'victorotubure7@gmail.com',
-            //     subject: 'Account creation successful',
-            //     html: '<h1> Congratulations, you have successfully created an account. Please go back to the login page and login with your email</h1>'
-            // })
-        })
-        .catch(err => console.log(err))
+    const hashedPassword = await bcrypt.hash(userPassword, 12)
+    const user = new User({
+        fullname,
+        email: userEmail,
+        password: hashedPassword,
+        address: {
+            "type": "Point",
+            "coordinates": [ Number(long), Number(lat)]
+        }
+    })
+
+    const newUser = await user.save()
+    console.log('Successfully created account')
+    
+    welcomeUser(newUser.email)
+    res.redirect('/login')
 }
 
 exports.postLogout = (req, res, next) => {

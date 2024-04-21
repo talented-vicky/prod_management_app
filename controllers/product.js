@@ -183,12 +183,12 @@ exports.sendComment = async (req, res, next) => {
     
     const product = await Product.findById(prodID)
     if(!product){
-        technicalErrorCtr(next, "User does not exist")
+        technicalErrorCtr(next, "Product does not exist")
     }
 
     const owner = await User.findById(product.user)
     if(!owner){
-        technicalErrorCtr(next, "User does not exist")
+        technicalErrorCtr(next, "Product owner no longer exists")
     }
 
     res.render('shop/success-msg', {
@@ -296,7 +296,7 @@ exports.showNearProducts = async (req, res, next) => {
 }
 
 
-exports.getEditProduct = (req, res, next) =>{
+exports.getEditProduct = async (req, res, next) =>{
     const editMode = req.query.edit
     // check show-product.ejs file for query assignment
     if(!editMode){
@@ -304,26 +304,28 @@ exports.getEditProduct = (req, res, next) =>{
     }
     const productId = req.params.prodId
 
-    Product.findById(productId)
-        .then(product => {
-            if(!product){
-                res.redirect('/')
-            }
-            res.render('admin/edit-prod', {
-                title: 'Edit Product',
-                path: '/onlyEdit-product',
-                editing: editMode,
-                errorPresent: false,
-                prod: product,
-                addprodError: null,
-                errorArray: []
-            })
-        })
-        .catch(err => technicalErrorCtr(next, err))
-    // remember we have access to all the key values in the ejs files
+    try {
+        const product = await Product.findById(productId)
+        if(!product){
+            res.redirect('/')
+        }
+
+        res.render('admin/edit-prod', {
+            title: 'Edit Product',
+            path: '/onlyEdit-product',
+            editing: editMode,
+            errorPresent: false,
+            prod: product,
+            addprodError: null,
+            errorArray: []
+        })    
+
+    } catch (error) {
+        technicalErrorCtr(next, error)
+    }
 }
 
-exports.postEditProduct = (req, res, next) => {
+exports.postEditProduct = async (req, res, next) => {
     const prodId = req.body.productId
     // I just fetched the id {name: productId, value: prod._id} 
     // (when on edit mode) from the hidden input in edit-product.ejs
@@ -349,52 +351,54 @@ exports.postEditProduct = (req, res, next) => {
     }    
 
     // getting to this stage means we made it past the validation
-    Product.findById(prodId)
-        .then(product => {
-            // adding additional route protection peradventure a user
-            // finds a way to get to the edit page of products not created
-            // by him/her
-            if(product.userId.toString() !== req.user._id.toString()){
-                console.log('Unauthorized error, not permitted to edit product')
-                return res.redirect('/')
-            }
-            product.title = updTitle 
-            if(image){
-                urlPathDelete.deteleFile(product.imageUrl)
-                product.imageUrl = image.path
-            } // if the user doesn't pick an image, url will be the old one
-            product.price = updPrice
-            product.description = updDes
-            product.userId = req.user
-            return product.save()
-            // note I called save on the result "product" not on model "Product"
-            .then(result => {
-                console.log('Successfully updated product')
-                res.redirect('/admin/show-product')
-            })
-        })
-        .catch(err => technicalErrorCtr(next, err))
+    try {
+        const product = await Product.findById(prodId)
+
+        // check if it's userId or user in shopping app
+        if(product.userId.toString() !== req.user._id.toString()){
+            console.log('Unauthorized error, not permitted to edit product')
+            return res.redirect('/')
+        }
+        product.title = updTitle 
+        if(image){
+            urlPathDelete.deteleFile(product.imageUrl)
+            product.imageUrl = image.path
+        } // if the user doesn't pick an image, url will be the old one
+        product.price = updPrice
+        product.description = updDes
+        product.userId = req.user
+        await product.save()
+
+        // note I called save on the result "product" not on model "Product"
+        console.log('Successfully updated product')
+        res.redirect('/admin/show-product')
+
+    } catch (error) {
+        technicalErrorCtr(next, error)
+    }
+        
         // mongoose does a bts update anytime we call save on an existing obj
 }
 
-exports.deleteProduct = (req, res, next) => {
+exports.deleteProduct = async (req, res, next) => {
     // const productId = req.body.prodId
     // fetching prodId from the name field of the hidden input
     
     const productId = req.params.prodId
-    Product.findById(productId)
-        .then(prod => {
-            if(!prod){
-                return next(new Error('Product not found, sorry!'))
-            }
-            urlPathDelete.deteleFile(prod.imageUrl)
-            return Product.deleteOne({_id: productId, userId: req.user._id})
-        })
-        .then(prod => {
-            console.log('product successfully deleted')
-            res.status(200).json({msg: "delete success!"})
-        })
-        .catch(err => res.status(500).json({msg: "server error deleting"}));
+    try {
+        const prod = await Product.findById(productId)
+        if(!prod){
+            technicalErrorCtr(next, "Product Not Found")
+        }
+
+        urlPathDelete.deteleFile(prod.imageUrl)
+        await Product.deleteOne({_id: productId, userId: req.user._id})
+        
+        res.status(200).json({msg: "delete success!"})
+            
+    } catch (error) {
+        res.status(500).json({msg: "server error deleting", info: error});
+    }
 }
 
 
